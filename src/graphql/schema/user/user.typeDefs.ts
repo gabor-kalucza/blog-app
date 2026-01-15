@@ -8,5 +8,4 @@ export const typeDefs = `#graphql
     users: [User!]!
     user(id: ID!): User
   }
-
 `
