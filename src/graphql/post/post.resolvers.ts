@@ -15,7 +15,11 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createPost(_: unknown, args: { input: unknown }, context: GraphQLContext) {
+    async createPost(
+      _: unknown,
+      args: { input: unknown },
+      context: GraphQLContext
+    ) {
       if (!context.user) {
         throw new GraphQLError('Not authenticated', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -24,6 +28,13 @@ export const resolvers = {
 
       try {
         const input: CreatePostInput = createPostSchema.parse(args.input)
+        const author = await User.findById(context.user.id)
+
+        if (!author) {
+          throw new GraphQLError('User not found', {
+            extensions: { code: 'FORBIDDEN' },
+          })
+        }
 
         return Post.create({
           title: input.title,
@@ -47,7 +58,15 @@ export const resolvers = {
   },
   Post: {
     author: async (parent: { authorId: string }) => {
-      return User.findById(parent.authorId)
+      const user = await User.findById(parent.authorId)
+
+      if (!user) {
+        throw new GraphQLError('Author not found', {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        })
+      }
+
+      return user
     },
   },
 }

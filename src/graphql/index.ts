@@ -4,6 +4,7 @@ import { typeDefs as userTypeDefs } from './user/user.typeDefs.js'
 import { typeDefs as postTypeDefs } from './post/post.typeDefs.js'
 
 export { createPostSchema, CreatePostInput } from './post/post.validation.js'
+export { createUserSchema, CreateUserInput } from './user/user.validation.js'
 export { buildContext } from './context.js'
 export { GraphQLContext } from './context.js'
 export const typeDefs = [userTypeDefs, postTypeDefs]
