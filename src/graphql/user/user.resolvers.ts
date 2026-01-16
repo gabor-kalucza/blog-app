@@ -1,43 +1,52 @@
 import { ZodError } from 'zod'
 import { User } from '../../models/index.js'
-import { CreateUserInput, createUserSchema } from './user.validation.js'
-import { GraphQLError } from 'graphql'
+import {
+  createUserSchema,
+  updateUserSchema,
+  deleteUserSchema,
+} from './user.validation.js'
+import {
+  createUser,
+  updateUserById,
+  deleteUserById,
+} from '../../services/user.service.js'
+import { validationError } from '../errors.js'
 
 export const resolvers = {
   Query: {
     users: async () => User.find().lean(),
-    user: async (_: unknown, args: { id: string }) => {
-      return User.findById(args.id).lean()
-    },
+    user: async (_: unknown, args: { id: string }) =>
+      User.findById(args.id).lean(),
   },
+
   Mutation: {
     async createUser(_: unknown, args: { input: unknown }) {
       try {
-        const input: CreateUserInput = createUserSchema.parse(args.input)
-        const isUserEmailExists = await User.exists({ email: input.email })
-
-        if (isUserEmailExists) {
-          throw new GraphQLError('Email already in use', {
-            extensions: {
-              code: 'BAD_USER_INPUT',
-            },
-          })
-        }
-
-        return await User.create({
-          name: input.name,
-          email: input.email,
-        })
+        const input = createUserSchema.parse(args.input)
+        return createUser(input)
       } catch (err) {
-        if (err instanceof ZodError) {
-          throw new GraphQLError('Validation failed', {
-            extensions: {
-              code: 'BAD_USER_INPUT',
-              fieldErrors: err.flatten().fieldErrors,
-            },
-          })
-        }
+        if (err instanceof ZodError) throw validationError(err)
+        throw err
+      }
+    },
 
+    async updateUser(_: unknown, args: unknown) {
+      try {
+        const { id, input } = updateUserSchema.parse(args)
+        return updateUserById(id, input)
+      } catch (err) {
+        if (err instanceof ZodError) throw validationError(err)
+        throw err
+      }
+    },
+
+    async deleteUser(_: unknown, args: unknown) {
+      try {
+        const { id } = deleteUserSchema.parse(args)
+        await deleteUserById(id)
+        return true
+      } catch (err) {
+        if (err instanceof ZodError) throw validationError(err)
         throw err
       }
     },

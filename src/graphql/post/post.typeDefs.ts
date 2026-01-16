@@ -6,16 +6,27 @@ export const typeDefs = `#graphql
     author: User!
     published: Boolean
   }
+
   type Query {
     posts: [Post!]!
     post(id: ID!): Post
   }
+
   type Mutation {
     createPost(input: CreatePostInput!): Post!
+    deletePost(id: ID!): Boolean!
+    updatePost(id: ID!, input: UpdatePostInput!): Post!
   }
+
   input CreatePostInput {
     title: String!
     content: String!
     published: Boolean
   }
+  
+  input UpdatePostInput {
+    title: String
+    content: String
+    published: Boolean
+}
 `
