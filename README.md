@@ -1,87 +1,267 @@
 # Blog API
 
-A backend API for a blog platform built with GraphQL, Node.js, Express, and MongoDB Atlas.
+A backend API for a blog platform built with **GraphQL, Node.js, Express, TypeScript, and MongoDB Atlas**.
 
-The API follows a clean and modular architecture and is designed to handle user management, post creation, and authorization logic in a scalable and maintainable way.
-
----
-
-## What this project does
-
-The API provides functionality for managing users and blog posts. It exposes a GraphQL interface that allows clients to create, update, delete, and query posts while enforcing authentication and authorization rules on the server.
-
-The application is backend-only and is intended to be consumed by a client such as a web or mobile application.
+This project demonstrates a clean and modular GraphQL backend architecture with proper separation of concerns, validation, and authorization logic. The API is backend-only and intended to be consumed by a web or mobile client.
 
 ---
 
 ## Features
 
-User management  
-Create users with validated input  
-Prevent duplicate user emails  
-Fetch users and user details
+### User management
 
-Post management  
-Create posts as an authenticated user  
-Update posts only if you are the author  
-Delete posts only if you are the author  
-Fetch all posts or a single post
+- Create users with validated input
+- Prevent duplicate user emails
+- Fetch all users or a single user
 
-Authentication and authorization  
-Request-level authentication using GraphQL context  
-Authorization guards for protected mutations  
-Users can only modify their own posts
+### Post management
 
-Validation and error handling  
-Input validation using Zod  
-Consistent GraphQL error responses  
-Clear error codes for common failure cases
+- Create posts as an authenticated user
+- Update posts only if you are the author
+- Delete posts only if you are the author
+- Fetch all posts or a single post
 
----
+### Authentication & authorization
 
-## Technologies used
+- Request-level authentication using GraphQL context
+- Authorization guards for protected mutations
+- Users can only modify their own posts
 
-Node.js  
-TypeScript  
-Express  
-Apollo Server  
-GraphQL  
-MongoDB Atlas  
-Mongoose  
-Zod  
-dotenv
+### Validation & error handling
+
+- Input validation using **Zod**
+- Structured GraphQL errors
+- Clear error codes (`UNAUTHENTICATED`, `FORBIDDEN`, `BAD_USER_INPUT`, `NOT_FOUND`)
 
 ---
 
-The codebase is organized to keep responsibilities clearly separated.  
-Resolvers handle GraphQL logic, services manage database operations, validation occurs at the API boundary, and authentication logic is centralized.
+## Tech Stack
+
+- Node.js
+- TypeScript
+- Express
+- Apollo Server
+- GraphQL
+- MongoDB Atlas
+- Mongoose
+- Zod
+- dotenv
+
+---
+
+## Project Structure
+
+```
+src/
+├── graphql/
+│   ├── context.ts
+│   ├── errors.ts
+│   ├── guards.ts
+│   ├── resolvers.ts
+│   ├── schema.ts
+│   ├── user/
+│   └── post/
+├── models/
+├── services/
+├── config.ts
+├── server.ts
+```
+
+- **Resolvers** handle GraphQL logic
+- **Services** manage database operations
+- **Validation** occurs at the API boundary
+- **Authentication** is centralized in the GraphQL context
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18+ recommended)
+- npm
+- MongoDB Atlas account (or local MongoDB)
+
+---
+
+### Installation
+
+1. **Clone the repository**
+
+```bash
+git clone https://github.com/your-username/blog-api.git
+cd blog-api
+```
+
+2. **Install dependencies**
+
+```bash
+npm install
+```
+
+3. **Create environment variables**
+
+```bash
+cp .env.example .env
+```
+
+4. **Fill in your `.env` file**
+
+```env
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/blog
+PORT=8080
+```
+
+5. **Run the development server**
+
+```bash
+npm run dev
+```
+
+The API will be available at:
+
+```
+http://localhost:8080/graphql
+```
+
+---
+
+## Environment Variables
+
+This repository does **not** include a `.env` file.
+
+You must provide your own MongoDB connection string.
+
+### `.env.example`
+
+```env
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>
+PORT=8080
+```
 
 ---
 
 ## Database
 
-The application uses MongoDB Atlas as its database.
+The API uses **MongoDB Atlas** by default.
 
-All data is stored in a cloud-hosted MongoDB cluster, which allows the API to run independently of local database instances and aligns with common production deployment practices.
+To run the project, you should:
 
-Database connection details are provided through environment variables.
+1. Create your own MongoDB cluster
+2. Create a database user
+3. Whitelist your IP address
+4. Use the provided connection string in `.env`
 
----
+### Local MongoDB (optional)
 
-## Authentication model
-
-Authentication is handled through the GraphQL context.
-
-Each request reads the Authorization header.  
-If present, user information is attached to the request context.  
-Protected mutations require authentication and enforce ownership checks.
-
-The authentication model is intentionally minimal and focuses on request context and authorization flow rather than token lifecycle management.
+```env
+MONGO_URI=mongodb://localhost:27017/blog
+```
 
 ---
 
-## Validation approach
+## How to Interact With the API
 
-All mutation inputs are validated using Zod schemas before any database operation is performed.
+### GraphQL Playground (Built-in)
 
-Validation errors are converted into structured GraphQL errors to provide clear and consistent feedback to API consumers.
+This API uses **Apollo Server**, which provides an interactive GraphQL IDE out of the box.
+
+After starting the server, open your browser at:
+
+```
+http://localhost:8080/graphql
+```
+
+You can:
+
+- Explore the schema
+- Run queries and mutations
+- View available types and inputs
+- Test authorization logic
+
+This replaces the need for Swagger, which is designed for REST APIs.
+
+---
+
+### Example Queries
+
+#### Fetch all posts
+
+```graphql
+query {
+  posts {
+    id
+    title
+    published
+    author {
+      name
+    }
+  }
+}
+```
+
+---
+
+### Example Mutations
+
+#### Create a user
+
+```graphql
+mutation {
+  createUser(input: { name: "Alice", email: "alice@example.com" }) {
+    id
+    name
+  }
+}
+```
+
+#### Create a post (authenticated)
+
+Add this HTTP header:
+
+```
+Authorization: Bearer <userId>
+```
+
+```graphql
+mutation {
+  createPost(
+    input: { title: "Hello World", content: "My first post", published: true }
+  ) {
+    id
+    title
+  }
+}
+```
+
+---
+
+## Authentication Model
+
+Authentication is handled via the **GraphQL context** and is required **only for protected mutations**.
+
+- Queries are public and do not require authentication
+- Mutations that modify data require authentication
+- Ownership checks are enforced for update and delete operations
+
+Each request reads the `Authorization` header. If present, the user ID is attached to the request context.
+
+```
+Authorization: Bearer <userId>
+```
+
+⚠️ **Note:**
+This authentication model is intentionally minimal and **not production-ready**.
+It focuses on authorization flow rather than token signing or lifecycle management.
+
+---
+
+## Scripts
+
+```bash
+npm run dev     # Start development server
+npm run build   # Build TypeScript
+npm start       # Run production build
+```
+
+---
